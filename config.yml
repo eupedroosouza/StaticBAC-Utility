@@ -1,0 +1,83 @@
+# StaticBAC Utility Tool Configuration
+
+utility:
+  output_dir: ./Output
+
+
+static_bac:
+  folder: ../StaticBAC
+  # If it is null, the algorithm search a executable on static-bac folder
+  executable: null
+
+models:
+  gpt2:
+    name: gpt2
+    type: hf
+    quantized: false
+    inference: MediaWiki
+  roBERTa:
+    name: roberta-base
+    type: hf
+    quantized: false
+    inference: sts-2
+  google-t5:
+    name: t5-base
+    type: hf
+    quantized: false
+    inference: null
+  inception-v3:
+    name: inception_v3
+    type: torchvision
+    quantized: true
+    weights: Inception_V3_QuantizedWeights.IMAGENET1K_FBGEMM_V1
+    inference: ImageNet
+  mobilenet-v3:
+    name: mobilenet_v3_large
+    type: torchvision
+    quantized: true
+    weights: MobileNet_V3_Large_QuantizedWeights.IMAGENET1K_QNNPACK_V1
+    inference: ImageNet
+  vgg-19:
+    name: vgg19
+    type: torchvision
+    quantized: false
+    weights: VGG19_Weights.IMAGENET1K_V1
+    inference: ImageNet
+  swin-v2-b:
+    name: swin_v2_b
+    type: torchvision
+    quantized: false
+    weights: Swin_V2_B_Weights.IMAGENET1K_V1
+    inference: ImageNet
+  # Already tested
+  bert:
+    name: bert-base-uncased
+    type: hf
+    quantized: false
+    inference: null
+  gpt:
+    name: openai-gpt
+    type: hf
+    quantized: false
+    inference: MediaWiki
+  resnet50:
+    name: resnet50
+    type: torchvision
+    quantized: false
+    weights: ResNet50_Weights.IMAGENET1K_V2
+    inference: ImageNet
+  efficientnet-b0:
+    name: efficientnet_b0
+    type: torchvision
+    quantized: false
+    weights: EfficientNet_B0_Weights.IMAGENET1K_V1
+    inference: ImageNet
+  vit-b-16:
+    name: vit_b_16
+    type: torchvision
+    quantized: false
+    weights: ViT_B_16_Weights.IMAGENET1K_V1
+    inference: ImageNet
+
+dataset:
+  image_net: ../Datasets/imagenet_validation/
