@@ -4,7 +4,7 @@ from typing import Optional
 import torch
 import transformers
 from datasets import load_dataset
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 import inference
 from utils import load_hf_model
@@ -68,7 +68,9 @@ def inference_with_mediawiki(ctx: app.Context) -> Optional[inference.InferenceRe
     model_name = ctx.model.name
 
     try:
-        model = load_hf_model(ctx.model.name)
+        from transformers import AutoConfig
+        config = AutoConfig.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_config(config).to("cpu")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         utils.console.print(
             f"[bold black on magenta] INFERENCE [/bold black on magenta] [white]Loaded model:[/white] [dim white]{model_name}[/dim white]")

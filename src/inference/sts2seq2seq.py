@@ -23,7 +23,9 @@ def inference_with_sts2(ctx: app.Context) -> Optional[inference.InferenceResult]
 
     try:
         # Load to CPU first to ensure compatibility with custom .npz weight loading logic
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to("cpu")
+        from transformers import AutoConfig
+        config = AutoConfig.from_pretrained(model_name)
+        model = AutoModelForSeq2SeqLM.from_config(config).to("cpu")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         utils.console.print(
             f"[bold black on magenta] INFERENCE [/bold black on magenta] [white]Loaded base model:[/white] [dim white]{model_name}[/dim white]"

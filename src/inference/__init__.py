@@ -81,10 +81,14 @@ def load_model_from_npz(ctx: app.Context, model):
                 loaded[k] = torch.from_numpy(arr)
 
     try:
-        missing, unexpected = model.load_state_dict(loaded, strict=False)
-        if missing:
+        loading_info = model.load_state_dict(loaded, strict=False)
+        if len(loading_info.unexpected_keys) > 0:
             utils.console.print(
-                f"[bold black on magenta] INFERENCE [/bold black on magenta] [white on yellow] WARNING [/white on yellow] Missing keys: {missing}")
+                f"[bold black on magenta] INFERENCE [/bold black on magenta] [white on yellow] WARNING [/white on yellow] Rejected tensors: {loading_info.unexpected_keys}")
+            print(loading_info.unexpected_keys)
+        if len(loading_info.missing_keys) > 0:
+            utils.console.print(
+                f"[bold black on magenta] INFERENCE [/bold black on magenta] [white on yellow] WARNING [/white on yellow] Missing keys: {loading_info.missing_keys}")
         utils.console.print(
             f"[bold black on magenta] INFERENCE [/bold black on magenta] [white]Successfully mapped and loaded {len(loaded)} tensors to model![/white]")
     except Exception as e:
