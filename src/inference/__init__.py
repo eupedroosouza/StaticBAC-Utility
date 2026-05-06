@@ -13,18 +13,18 @@ import meta
 import reconstruction
 import sources
 import utils
-from inference import mediawiki, sts2
+from inference import mediawiki, sts2, sts2seq2seq
 
 
 class InferenceType(Enum):
     IMAGENET = 1
     MEDIAWIKI = 2
     STS2 = 3
+    STS2_SEQ2SEQ = 4
 
 
 @dataclass
 class InferenceResult:
-    dataset: str
     metric: str
     result: dict[str, float]
 
@@ -43,6 +43,8 @@ info: dict[InferenceType, InferenceTypeInfo] = {
                                                run_inference=mediawiki.inference_with_mediawiki),
     InferenceType.STS2: InferenceTypeInfo("STS-2", [sources.Source.HUGGING_FACE],
                                           run_inference=sts2.inference_with_sts2),
+    InferenceType.STS2_SEQ2SEQ: InferenceTypeInfo("STS-2 to Seq2Seq", [sources.Source.HUGGING_FACE],
+                                                  run_inference=sts2seq2seq.inference_with_sts2)
 }
 
 

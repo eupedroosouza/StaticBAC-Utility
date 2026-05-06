@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import app
+import inference
 import sbac
 
 
@@ -37,7 +38,7 @@ def save_result(path: Path, ctx: app.Context, result: app.IterationResult):
            f"{result.staticbac.decode.time:.4f}", f"{result.staticbac.decode.speed:.4f}",
            f"{result.staticbac.decode.mem.baseline:.4f}", f"{result.staticbac.decode.mem.peak:.4f}",
            f"{result.staticbac.decode.mem.delta:.4f}", f"{result.overall_max_error:.20f}",
-           f"{result.overall_mean_error:.20f}", result.dataset, result.accuracy_metric]
+           f"{result.overall_mean_error:.20f}", inference.info[ctx.model.inference].name, result.accuracy_metric]
 
     for k, v in result.accuracy_result.items():
         fields.append(f"accuracy_{k}")

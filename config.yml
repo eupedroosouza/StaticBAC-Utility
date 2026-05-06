@@ -24,7 +24,7 @@ models:
     name: t5-base
     source: HUGGING_FACE
     quantized: false
-    inference: null
+    inference: STS2_SEQ2SEQ
   inception-v3:
     name: inception_v3
     source: TORCHVISION

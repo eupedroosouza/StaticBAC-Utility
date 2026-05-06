@@ -6,7 +6,7 @@ from rich.box import DOUBLE_EDGE
 from rich.panel import Panel
 from rich.progress import track
 from torch.utils.data import DataLoader
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 import app
 import inference
@@ -15,29 +15,15 @@ import utils
 
 def inference_with_sts2(ctx: app.Context) -> Optional[inference.InferenceResult]:
     """
-    Evaluates a sequence classification model on the SST-2 validation dataset.
-
-    This function loads a pre-trained base model from Hugging Face, injects custom
-    weights from an .npz file, and performs batched inference to calculate accuracy.
-    The model is initially loaded to the CPU to ensure compatibility with the custom
-    weight loading mechanism before being moved to an available hardware accelerator (e.g., GPU).
-
-    Args:
-        ctx (app.Context): Application context containing model configuration and metadata.
-
-    Returns:
-        float | None: The classification accuracy on the validation set as a float
-        (between 0.0 and 1.0), or None if an error occurs during initialization.
+    Evaluates a Seq2Seq model (like T5) on the SST-2 validation dataset.
     """
-    # Optimize CPU operations
     torch.set_num_threads(8)
 
     model_name = ctx.model.name
 
-    # 1. Initialize Base Model and Tokenizer
     try:
         # Load to CPU first to ensure compatibility with custom .npz weight loading logic
-        model = AutoModelForSequenceClassification.from_pretrained(model_name).to("cpu")
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to("cpu")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         utils.console.print(
             f"[bold black on magenta] INFERENCE [/bold black on magenta] [white]Loaded base model:[/white] [dim white]{model_name}[/dim white]"
@@ -48,15 +34,13 @@ def inference_with_sts2(ctx: app.Context) -> Optional[inference.InferenceResult]
         )
         return None
 
-    # 2. Inject Custom Weights
     res = inference.load_model_from_npz(ctx, model)
     if res is None:
         return None
 
-    # Set evaluation mode to disable dropout and batch normalization updates
     model.eval()
 
-    # 3. Load SST-2 Dataset
+    # Load SST-2 Dataset
     with utils.console.status(
             "[bold black on magenta] INFERENCE [/bold black on magenta] [white]Loading dataset (stanfordnlp/sst2)...[/white]"):
         try:
@@ -78,8 +62,10 @@ def inference_with_sts2(ctx: app.Context) -> Optional[inference.InferenceResult]
 
     # 5. Data Processing (Tokenization and Batching)
     def tokenize_function(examples):
-        """Tokenizes text batches using consistent padding and truncation."""
-        return tokenizer(examples["sentence"], padding="max_length", truncation=True, max_length=128)
+        """Tokenizes text batches using consistent padding, truncation, and T5 task prefix."""
+        # T5 requires a specific prefix to know which task to perform
+        prefixed_sentences = ["sst2 sentence: " + sentence for sentence in examples["sentence"]]
+        return tokenizer(prefixed_sentences, padding="max_length", truncation=True, max_length=128)
 
     # Apply tokenization to the entire dataset efficiently
     tokenized_datasets = dataset.map(tokenize_function, batched=True)
@@ -111,19 +97,29 @@ def inference_with_sts2(ctx: app.Context) -> Optional[inference.InferenceResult]
 
         # Disable gradient calculations to save memory and speed up computation
         with torch.no_grad():
-            outputs = model(**batch)
+            generated_tokens = model.generate(
+                input_ids=batch["input_ids"],
+                attention_mask=batch["attention_mask"],
+                max_new_tokens=3  # We only need enough tokens to write "positive" or "negative"
+            )
 
         # Extract predicted classes
-        logits = outputs.logits
-        predictions = torch.argmax(logits, dim=-1)
+        pred_strings = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 
-        # Count correctly classified samples in the current batch
-        correct += (predictions == labels).sum().item()
+        # Map the strings back to integers and count correctly classified samples
+        for pred_str, label in zip(pred_strings, labels):
+            # Clean the string (remove spaces and make lowercase)
+            pred_str = pred_str.strip().lower()
 
-    # 7. Results Calculation and Display
+            # Map text to SST-2 classes (1 for positive, 0 for negative)
+            predicted_class = 1 if pred_str == "positive" else 0
+
+            if predicted_class == label.item():
+                correct += 1
+
+    # Results Calculation and Display
     accuracy = correct / total
     accuracy_percent = accuracy * 100
-
     inference_summary = (
         f"[bold white]Model:[/bold white] {ctx.model.name}\n"
         f"[bold white]Accuracy:[/bold white] {accuracy_percent:.2f}% ({accuracy:.4f})"

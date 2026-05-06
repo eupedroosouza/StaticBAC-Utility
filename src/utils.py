@@ -68,7 +68,8 @@ def load_model(name, source="hf", weights=None, quantized=False):
 
 from utils import console  # assumindo que seu console vem daqui
 
-from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForSequenceClassification, AutoModel
+from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForSequenceClassification, AutoModel, \
+    AutoModelForSeq2SeqLM
 
 
 # (Assumindo que você tem o utils importado)
@@ -91,6 +92,12 @@ def load_hf_model(name: str):
                 console.print(
                     f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Causal LM[/white]")
                 return AutoModelForCausalLM.from_pretrained(name)
+
+            # Sequence-to-Sequence / Encoder-Decoder (T5, BART)
+            elif "conditionalgeneration" in arch or "seq2seqlm" in arch:
+                console.print(
+                    f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Seq2Seq LM[/white]")
+                return AutoModelForSeq2SeqLM.from_pretrained(name)
 
             # Mask models (bert-base)
             elif "maskedlm" in arch:

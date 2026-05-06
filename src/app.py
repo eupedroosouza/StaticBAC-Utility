@@ -39,7 +39,6 @@ class IterationResult:
     staticbac: StaticBacExecResult
     overall_max_error: float
     overall_mean_error: float
-    dataset: str
     accuracy_metric: str
     accuracy_result: dict[str, float]
 
@@ -77,7 +76,8 @@ def run():
     model_name, model = res
 
     if not model.source in inference.info[model.inference].supported_sources:
-        utils.console.print(f"[bold black on white] MODEL [/bold black on white] [bold white on red] ERROR [/bold white on red] Inference type {model.inference} not supported to source {model.source}.")
+        utils.console.print(
+            f"[bold black on white] MODEL [/bold black on white] [bold white on red] ERROR [/bold white on red] Inference type {model.inference} not supported to source {model.source}.")
         return
 
     # Context
@@ -167,14 +167,12 @@ def run():
     res = inference.info[model.inference].run_inference(ctx)
     if res is None:
         return
-    dataset = res.dataset
     accuracy_metric = res.metric
     accuracy_result = res.result
 
     # 4. Results
     results_file = ctx.resultsDir / "results.csv"
-    result = IterationResult(avg_sbac_result, overall_max_error, overall_mean_error, dataset, accuracy_metric,
-                             accuracy_result)
+    result = IterationResult(avg_sbac_result, overall_max_error, overall_mean_error, accuracy_metric, accuracy_result)
     save_result(results_file, ctx, result)
     utils.console.print(
         f"[bold white on green] RESULTS [/bold white on green] [white]Saved results to:[/white] [dim white]{results_file}[/dim white]..")
