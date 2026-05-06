@@ -84,7 +84,8 @@ def inference_with_imagenet(ctx: app.Context) -> Optional[inference.InferenceRes
     utils.console.print(Panel(inference_summary, title="[bold white]Inference Results[/bold white]", box=DOUBLE_EDGE,
                               border_style="white", expand=False))
 
+    i_dataset = "imagenet"
     accuracy_metric = "top1"
     accuracy_result = {"top1": top1_acc, "top5": top5_acc}
 
-    return inference.InferenceResult(accuracy_metric, accuracy_result)
+    return inference.InferenceResult(i_dataset, accuracy_metric, accuracy_result)

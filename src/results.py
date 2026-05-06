@@ -27,7 +27,7 @@ def save_result(path: Path, ctx: app.Context, result: app.IterationResult):
     fields = ["model", "tensors", "original_size", "compressed_size", "compression_ratio", "encoding_time",
               "encoding_speed", "encoding_mem_baseline", "encoding_mem_peak",
               "encoding_mem_delta", "decoding_time", "decoding_speed", "decoding_mem_baseline", "decoding_mem_peak",
-              "decoding_mem_delta", "overall_max_error", "overall_mean_error", "accuracy_metric"]
+              "decoding_mem_delta", "overall_max_error", "overall_mean_error", "dataset", "accuracy_metric"]
 
     row = [ctx.model.name, result.staticbac.tensors, f"{result.staticbac.encode.originalSize:.2f}",
            f"{result.staticbac.encode.compressedSize:.2f}",
@@ -37,7 +37,7 @@ def save_result(path: Path, ctx: app.Context, result: app.IterationResult):
            f"{result.staticbac.decode.time:.4f}", f"{result.staticbac.decode.speed:.4f}",
            f"{result.staticbac.decode.mem.baseline:.4f}", f"{result.staticbac.decode.mem.peak:.4f}",
            f"{result.staticbac.decode.mem.delta:.4f}", f"{result.overall_max_error:.20f}",
-           f"{result.overall_mean_error:.20f}", result.accuracy_metric]
+           f"{result.overall_mean_error:.20f}", result.dataset, result.accuracy_metric]
 
     for k, v in result.accuracy_result.items():
         fields.append(f"accuracy_{k}")

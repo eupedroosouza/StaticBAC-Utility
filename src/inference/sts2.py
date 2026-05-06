@@ -131,7 +131,8 @@ def inference_with_sts2(ctx: app.Context) -> Optional[inference.InferenceResult]
     utils.console.print(Panel(inference_summary, title="[bold white]Inference Results[/bold white]", box=DOUBLE_EDGE,
                               border_style="white", expand=False))
 
+    i_dataset = "stanfordnlp/sst2"
     accuracy_metric = "accuracy"
     accuracy_result = {"accuracy": accuracy}
 
-    return inference.InferenceResult(accuracy_metric, accuracy_result)
+    return inference.InferenceResult(i_dataset, accuracy_metric, accuracy_result)

@@ -113,7 +113,8 @@ def inference_with_mediawiki(ctx: app.Context) -> Optional[inference.InferenceRe
     utils.console.print(Panel(inference_summary, title="[bold white]Inference Results[/bold white]", box=DOUBLE_EDGE,
                               border_style="white", expand=False))
 
+    i_dataset = "wikitext-2-raw-v1"
     accuracy_metric = "perplexity"
     accuracy_result = {"perplexity": ppl, "avg_nll": avg_nll, "token_count": token_count}
 
-    return inference.InferenceResult(accuracy_metric, accuracy_result)
+    return inference.InferenceResult(i_dataset, accuracy_metric, accuracy_result)

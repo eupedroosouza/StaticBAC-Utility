@@ -24,6 +24,7 @@ class InferenceType(Enum):
 
 @dataclass
 class InferenceResult:
+    dataset: str
     metric: str
     result: dict[str, float]
 
