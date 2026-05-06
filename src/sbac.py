@@ -119,7 +119,10 @@ def run(ctx: app.Context, save_dir: Path) -> StaticBacExecResult:
     model_binaries_dir = ctx.modelDir / "binaries"
     model_tensors_meta_path = ctx.modelDir / "tensor.meta"
 
-    command = f'"{environment().executable}" --encode --decode --binaries "{abspath(model_binaries_dir)}" --meta "{abspath(model_tensors_meta_path)}" --name "{ctx.model.name}"'
+    split = ctx.model.name.split("/")
+    model_name = split[len(split) - 1]
+
+    command = f'"{environment().executable}" --encode --decode --binaries "{abspath(model_binaries_dir)}" --meta "{abspath(model_tensors_meta_path)}" --name "{model_name}"'
 
     sbac_exec_result = subprocess.run(
         command,
@@ -130,11 +133,11 @@ def run(ctx: app.Context, save_dir: Path) -> StaticBacExecResult:
     )
 
     decoded_dir = save_dir / "decoded/"
-    decoded_bitstream_path = os.path.join(save_dir, f"{ctx.modelName}.bin")
+    decoded_bitstream_path = os.path.join(save_dir, f"{model_name}.bin")
 
     # Move the folders and decoded
-    decoded_sbac_folder = os.path.join(utils.root(), f"{ctx.model.name}_decoded")
-    decoded_sbac_bitstream = os.path.join(utils.root(), f"{ctx.model.name}.bin")
+    decoded_sbac_folder = os.path.join(utils.root(), f"{model_name}_decoded")
+    decoded_sbac_bitstream = os.path.join(utils.root(), f"{model_name}.bin")
     shutil.move(decoded_sbac_folder, abspath(decoded_dir))
     shutil.move(decoded_sbac_bitstream, abspath(decoded_bitstream_path))
 

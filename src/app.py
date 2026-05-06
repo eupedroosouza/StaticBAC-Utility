@@ -12,6 +12,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 import config
+import inference
 import sbac
 import utils
 from inference.imagenet import inference_with_imagenet
@@ -74,6 +75,10 @@ def run():
         return
     model_name, model = res
 
+    if not model.source in inference.info[model.inference].supported_sources:
+        utils.console.print(f"[bold black on white] MODEL [/bold black on white] [bold white on red] ERROR [/bold white on red] Inference type {model.inference} not supported to source {model.source}.")
+        return
+
     # Context
     output_dir = Path(config.get_config().utility.output_dir)
     model_dir = output_dir / "models" / model_name
@@ -97,8 +102,7 @@ def run():
     utils.console.print()
 
     # 1. Load model
-    create_meta(model.name, str(model_dir), model.type, model.weights, model.quantized)
-
+    create_meta(ctx)
 
     # 2. Running StaticBAC iterations
     results: list[StaticBacExecResult] = []
@@ -158,30 +162,12 @@ def run():
         return
     overall_max_error, overall_mean_error = rec_res
 
-    accuracy_metric: str = ""
-    accuracy_result: dict[str, float] = {}
     # 3. Run inference
-    if model.inference.lower() == "imagenet" or model.inference.lower() == "inet":
-        res = inference_with_imagenet(ctx)
-        if res is None:
-            return
-        top1, top5 = res
-        accuracy_metric = "top1"
-        accuracy_result = {"top1": top1, "top5": top5}
-    elif model.inference.lower() == "mediawiki" or model.inference.lower() == "mw":
-        ppl, avg_nll, token_count = inference_with_mediawiki(ctx)
-        accuracy_metric = "perplexity"
-        accuracy_result = {"perplexity": ppl, "avg_nll": avg_nll, "token_count": token_count}
-    elif model.inference.lower() == "sts2" or model.inference.lower() == "sts-2":
-        accuracy = inference_with_sts2(ctx)
-        if accuracy is None:
-            return
-        accuracy_metric = "accuracy"
-        accuracy_result = {"accuracy": accuracy}
-    else:
-        utils.console.print(
-            f"[bold black on magenta] INFERENCE [/bold black on magenta] [bold black on red] ERROR [/bold black on red] Invalid inference type: {model.inference}.")
+    res = inference.info[model.inference].run_inference(ctx)
+    if res is None:
         return
+    accuracy_metric = res.metric
+    accuracy_result = res.result
 
     # 4. Results
     results_file = ctx.resultsDir / "results.csv"

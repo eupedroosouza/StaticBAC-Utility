@@ -1,4 +1,4 @@
-from typing import T
+from typing import Optional
 
 import torch
 from rich.box import DOUBLE_EDGE
@@ -6,18 +6,17 @@ from rich.panel import Panel
 from rich.progress import track
 from torch.utils.data import DataLoader
 from torchvision import datasets
-from torchvision import models
 from torchvision.models import Weights
-from transformers import AutoImageProcessor
 
 import app
 import config
+import inference
 import utils
-from inference.inference import load_model_from_npz
 from utils import load_torchvision_model
 
 
-def inference_with_imagenet(ctx: app.Context) -> tuple[float, float] | None:
+def inference_with_imagenet(ctx: app.Context) -> Optional[inference.InferenceResult]:
+    import torchvision.models as models # dont remove
     torch.set_num_threads(8)
 
     model = load_torchvision_model(ctx.model.name, ctx.model.weights, ctx.model.quantized)
@@ -25,7 +24,7 @@ def inference_with_imagenet(ctx: app.Context) -> tuple[float, float] | None:
         f"[bold black on magenta] INFERENCE [/bold black on magenta] [white]Loaded model:[/white] [dim white]{ctx.model.name}[/dim white]")
 
     # Load tensors to model
-    res = load_model_from_npz(ctx, model)
+    res = inference.load_model_from_npz(ctx, model)
     if res is None:
         return None
 
@@ -85,4 +84,7 @@ def inference_with_imagenet(ctx: app.Context) -> tuple[float, float] | None:
     utils.console.print(Panel(inference_summary, title="[bold white]Inference Results[/bold white]", box=DOUBLE_EDGE,
                               border_style="white", expand=False))
 
-    return top1_acc, top5_acc
+    accuracy_metric = "top1"
+    accuracy_result = {"top1": top1_acc, "top5": top5_acc}
+
+    return inference.InferenceResult(accuracy_metric, accuracy_result)

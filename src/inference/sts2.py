@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 from datasets import load_dataset
 from rich.box import DOUBLE_EDGE
@@ -7,11 +9,11 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 import app
+import inference
 import utils
-from inference.inference import load_model_from_npz
 
 
-def inference_with_sts2(ctx: app.Context) -> float | None:
+def inference_with_sts2(ctx: app.Context) -> Optional[inference.InferenceResult]:
     """
     Evaluates a sequence classification model on the SST-2 validation dataset.
 
@@ -47,7 +49,7 @@ def inference_with_sts2(ctx: app.Context) -> float | None:
         return None
 
     # 2. Inject Custom Weights
-    res = load_model_from_npz(ctx, model)
+    res = inference.load_model_from_npz(ctx, model)
     if res is None:
         return None
 
@@ -129,4 +131,7 @@ def inference_with_sts2(ctx: app.Context) -> float | None:
     utils.console.print(Panel(inference_summary, title="[bold white]Inference Results[/bold white]", box=DOUBLE_EDGE,
                               border_style="white", expand=False))
 
-    return accuracy
+    accuracy_metric = "accuracy"
+    accuracy_result = {"accuracy": accuracy}
+
+    return inference.InferenceResult(accuracy_metric, accuracy_result)

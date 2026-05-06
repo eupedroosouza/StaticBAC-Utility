@@ -5,16 +5,24 @@ from typing import Dict, Optional
 
 import yaml
 
+import inference
+import sources
 import utils
 
 
 @dataclass
 class ModelConfig:
     name: str
-    type: str
+    source: sources.Source
     quantized: bool
-    inference: str
+    inference: inference.InferenceType
     weights: Optional[str] = None
+
+    def __post_init__(self):
+        if isinstance(self.source, str):
+            self.source = sources.Source[self.source]
+        if isinstance(self.inference, str):
+            self.inference = inference.InferenceType[self.inference]
 
 
 @dataclass

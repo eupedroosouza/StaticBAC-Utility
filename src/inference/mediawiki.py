@@ -1,11 +1,12 @@
 import math
+from typing import Optional
 
 import torch
 import transformers
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer
 
-from inference.inference import load_model_from_npz
+import inference
 from utils import load_hf_model
 
 transformers.logging.set_verbosity_error()
@@ -61,7 +62,7 @@ def perplexity_sliding_window(model, tokenizer, text, max_length=512, stride=512
     return ppl, avg_nll, total_count
 
 
-def inference_with_mediawiki(ctx: app.Context) -> tuple[float, float, int] | None:
+def inference_with_mediawiki(ctx: app.Context) -> Optional[inference.InferenceResult]:
     torch.set_num_threads(8)
 
     model_name = ctx.model.name
@@ -77,7 +78,7 @@ def inference_with_mediawiki(ctx: app.Context) -> tuple[float, float, int] | Non
         return None
 
     # Load tensors to model
-    res = load_model_from_npz(ctx, model)
+    res = inference.load_model_from_npz(ctx, model)
     if res is None:
         return None
 
@@ -112,4 +113,7 @@ def inference_with_mediawiki(ctx: app.Context) -> tuple[float, float, int] | Non
     utils.console.print(Panel(inference_summary, title="[bold white]Inference Results[/bold white]", box=DOUBLE_EDGE,
                               border_style="white", expand=False))
 
-    return ppl, avg_nll, token_count
+    accuracy_metric = "perplexity"
+    accuracy_result = {"perplexity": ppl, "avg_nll": avg_nll, "token_count": token_count}
+
+    return inference.InferenceResult(accuracy_metric, accuracy_result)

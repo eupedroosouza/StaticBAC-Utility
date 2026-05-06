@@ -12,72 +12,72 @@ static_bac:
 models:
   gpt2:
     name: gpt2
-    type: hf
+    source: HUGGING_FACE
     quantized: false
-    inference: MediaWiki
+    inference: MEDIAWIKI
   roBERTa:
-    name: roberta-base
-    type: hf
+    name: textattack/roberta-base-SST-2
+    source: HUGGING_FACE
     quantized: false
-    inference: sts-2
+    inference: STS2
   google-t5:
     name: t5-base
-    type: hf
+    source: HUGGING_FACE
     quantized: false
     inference: null
   inception-v3:
     name: inception_v3
-    type: torchvision
+    source: TORCHVISION
     quantized: true
     weights: Inception_V3_QuantizedWeights.IMAGENET1K_FBGEMM_V1
-    inference: ImageNet
+    inference: IMAGENET
   mobilenet-v3:
     name: mobilenet_v3_large
-    type: torchvision
+    source: TORCHVISION
     quantized: true
     weights: MobileNet_V3_Large_QuantizedWeights.IMAGENET1K_QNNPACK_V1
-    inference: ImageNet
+    inference: IMAGENET
   vgg-19:
     name: vgg19
-    type: torchvision
+    source: TORCHVISION
     quantized: false
     weights: VGG19_Weights.IMAGENET1K_V1
-    inference: ImageNet
+    inference: IMAGENET
   swin-v2-b:
     name: swin_v2_b
-    type: torchvision
+    source: TORCHVISION
     quantized: false
     weights: Swin_V2_B_Weights.IMAGENET1K_V1
-    inference: ImageNet
+    inference: IMAGENET
   # Already tested
   bert:
-    name: bert-base-uncased
-    type: hf
+    name: textattack/bert-base-uncased-SST-2
+    source: HUGGING_FACE
     quantized: false
-    inference: null
+    inference: STS2
   gpt:
     name: openai-gpt
-    type: hf
+    source: HUGGING_FACE
     quantized: false
-    inference: MediaWiki
+    inference: MEDIAWIKI
   resnet50:
     name: resnet50
-    type: torchvision
+    source: TORCHVISION
     quantized: false
     weights: ResNet50_Weights.IMAGENET1K_V2
-    inference: ImageNet
+    inference: IMAGENET
   efficientnet-b0:
     name: efficientnet_b0
-    type: torchvision
+    source: TORCHVISION
     quantized: false
     weights: EfficientNet_B0_Weights.IMAGENET1K_V1
-    inference: ImageNet
+    inference: IMAGENET
   vit-b-16:
     name: vit_b_16
-    type: torchvision
+    source: TORCHVISION
     quantized: false
     weights: ViT_B_16_Weights.IMAGENET1K_V1
-    inference: ImageNet
+    inference: IMAGENET
 
 dataset:
   image_net: ../Datasets/imagenet_validation/

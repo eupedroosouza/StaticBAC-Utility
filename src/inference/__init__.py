@@ -1,12 +1,48 @@
 import os
+from dataclasses import dataclass
+from enum import Enum
+from typing import Callable
 
 import numpy as np
 import torch
 from rich.progress import track
 
 import app
+import inference.imagenet
+import meta
 import reconstruction
+import sources
 import utils
+from inference import mediawiki, sts2
+
+
+class InferenceType(Enum):
+    IMAGENET = 1
+    MEDIAWIKI = 2
+    STS2 = 3
+
+
+@dataclass
+class InferenceResult:
+    metric: str
+    result: dict[str, float]
+
+
+@dataclass
+class InferenceTypeInfo:
+    name: str
+    supported_sources: list[sources.Source]
+    run_inference: Callable[[app.Context], InferenceResult | None]
+
+
+info: dict[InferenceType, InferenceTypeInfo] = {
+    InferenceType.IMAGENET: InferenceTypeInfo("ImageNet", [sources.Source.TORCHVISION],
+                                              run_inference=imagenet.inference_with_imagenet),
+    InferenceType.MEDIAWIKI: InferenceTypeInfo("MediaWiki", [sources.Source.HUGGING_FACE],
+                                               run_inference=mediawiki.inference_with_mediawiki),
+    InferenceType.STS2: InferenceTypeInfo("STS-2", [sources.Source.HUGGING_FACE],
+                                          run_inference=sts2.inference_with_sts2),
+}
 
 
 def load_model_from_npz(ctx: app.Context, model):
@@ -20,7 +56,7 @@ def load_model_from_npz(ctx: app.Context, model):
 
     # Restore reconstructed model from NPZ
     decoded_meta = reconstruction.read_decoded_meta(ctx.decodedDir / "decoded_tensors.meta")
-    _, _, name_to_id = reconstruction.read_encoder_meta(ctx.modelDir / "tensor.meta", ctx.model.quantized)
+    _, _, name_to_id = meta.read_encoder_meta(ctx.modelDir / "tensor.meta", ctx.model.quantized)
     loaded = {}
     with utils.console.status(
             "[bold black on magenta] INFERENCE [/bold black on magenta] [white]Loading reconstructed model...[/white]"):

@@ -7,6 +7,7 @@ from rich.panel import Panel
 from rich.box import DOUBLE_EDGE
 
 import config
+import sources
 import utils
 from config import ModelConfig
 
@@ -30,7 +31,7 @@ def select_model() -> tuple[str, ModelConfig] | None:
         return None
 
     model = config.get_config().models[model_name]
-    source_name = "HuggingFace" if model.type == "hf" else "Torchvision" if model.type == "torchvision" else model.type
+    source_name = sources.info[model.source].display_name
 
     summary_text = (
         f"[bold white]Name:[/bold white] {model.name}\n"

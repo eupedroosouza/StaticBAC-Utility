@@ -1,50 +1,12 @@
-import hashlib
-import json
-import logging
-import os
 import sys
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import torch
-import transformers
 from rich.box import DOUBLE_EDGE
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.text import Text
-from transformers import AutoModelForCausalLM, AutoModelForSequenceClassification, AutoModel, AutoConfig, \
-    BitsAndBytesConfig
-
-os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
-
-
-class LogCaptureHandler(logging.Handler):
-    def __init__(self):
-        super().__init__()
-        self.logs = []
-
-    def emit(self, record):
-        self.logs.append(self.format(record))
-
-
-log_capturer = LogCaptureHandler()
-log_capturer.setFormatter(logging.Formatter("%(name)s: %(message)s"))
-
-# Interceptar warnings nativos
-logging.captureWarnings(True)
-logging.getLogger("py.warnings").addHandler(log_capturer)
-
-# Interceptar logs do HuggingFace Hub
-hf_logger = logging.getLogger("huggingface_hub")
-hf_logger.setLevel(logging.WARNING)
-hf_logger.addHandler(log_capturer)
-hf_logger.propagate = False
-
-# Interceptar logs verbosos do transformers e enviá-los ao nosso capturador
-transformers.logging.set_verbosity_warning()
-transformers.logging.disable_default_handler()
-transformers.logging.add_handler(log_capturer)
 
 _root: Optional[Path] = None
 console = Console()
@@ -104,24 +66,49 @@ def load_model(name, source="hf", weights=None, quantized=False):
     return load_hf_model(name)
 
 
+from utils import console  # assumindo que seu console vem daqui
+
+from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForSequenceClassification, AutoModel
+
+
+# (Assumindo que você tem o utils importado)
+
 def load_hf_model(name: str):
+    try:
+        config = AutoConfig.from_pretrained(name)
 
-    # Model Class Priority List
-    model_classes = [
-        AutoModelForCausalLM,
-        AutoModelForSequenceClassification,
-        AutoModel
-    ]
+        if hasattr(config, "architectures") and config.architectures:
+            arch = config.architectures[0].lower()
 
-    for model_class in model_classes:
-        try:
-            return model_class.from_pretrained(name)
-        except Exception as e:
-            console.print(
-                f"[bold black on white] MODEL [/bold black on white] [bold white on red] MODEL [/bold white on red] {e}.")
-            continue
+            # Classification models (BERT, RoBERTa no SST-2)
+            if "sequenceclassification" in arch:
+                console.print(
+                    f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Sequence Classification[/white]")
+                return AutoModelForSequenceClassification.from_pretrained(name)
 
-    raise RuntimeError(f"Could not load model: {name}.")
+            # Text generations models (GPT-2, LLaMA, OPT, Bloom)
+            elif "causallm" in arch or "lmhead" in arch:
+                console.print(
+                    f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Causal LM[/white]")
+                return AutoModelForCausalLM.from_pretrained(name)
+
+            # Mask models (bert-base)
+            elif "maskedlm" in arch:
+                from transformers import AutoModelForMaskedLM
+                console.print(
+                    f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Masked LM[/white]")
+                return AutoModelForMaskedLM.from_pretrained(name)
+
+        # Fallback to Auto Model
+        console.print(
+            f"[bold black on white] MODEL [/bold black on white] [white on yellow] WARNING [/white on yellow] Architecture unclear. Loading raw AutoModel.")
+        return AutoModel.from_pretrained(name)
+
+    except Exception as e:
+        console.print(
+            f"[bold black on white] MODEL [/bold black on white] [bold white on red] ERROR [/bold white on red] {e}"
+        )
+        raise RuntimeError(f"Could not load model: {name}.")
 
 
 def load_torchvision_model(model_name, weights_name=None, quantized=False):
@@ -167,37 +154,11 @@ def load_torchvision_model(model_name, weights_name=None, quantized=False):
             raise ValueError(f"Weights {weights_name} not found in target module.")
 
     if quantized:
-        model = model_fn(weights=weights, quantize=True)
+        model = model_fn(weights=weights, quantize=True, progress=False)
     else:
-        model = model_fn(weights=weights)
+        model = model_fn(weights=weights, progress=False)
 
     return model
-
-
-# Sha256 Checksum System
-def compute_sha256(filepath):
-    sha256_hash = hashlib.sha256()
-    with open(filepath, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-    return sha256_hash.hexdigest()
-
-
-def verify_checksums(out_dir, checksum_file):
-    if not os.path.exists(checksum_file):
-        return False
-    try:
-        with open(checksum_file, "r") as f:
-            checksums = json.load(f)
-        for filepath, expected_hash in checksums.items():
-            full_path = os.path.join(out_dir, filepath)
-            if not os.path.exists(full_path):
-                return False
-            if compute_sha256(full_path) != expected_hash:
-                return False
-        return True
-    except Exception:
-        return False
 
 
 def get_np_type(bitwidth: int):
@@ -208,6 +169,3 @@ def get_np_type(bitwidth: int):
     else:
         np_type = np.int32
     return np_type
-
-def get_model_from_gguf(model_name: str) -> str:
-    return model_name.split('/')[-1].split('-GGUF')[0]

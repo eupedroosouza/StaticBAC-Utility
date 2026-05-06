@@ -12,6 +12,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.table import Table
 
 import app
+import meta
+import sources
 import utils
 
 BITWIDTH_MAP = {
@@ -131,41 +133,6 @@ def check_reconstruction_errors(model, save_dir: Path, loaded_tensors: dict):
     return overall_max_error, overall_mean_error, unmatched_shapes, errors
 
 
-def read_encoder_meta(path, quantized):
-    qsteps = {}
-    id_to_name = {}
-    name_to_id = {}
-
-    with open(path) as f:
-        lines = f.readlines()
-
-    for line in lines:
-        line = line.strip()
-        if not line or line.startswith("numTensors"):
-            continue
-
-        parts = line.split()
-        if len(parts) < 6:
-            continue
-
-        tensor_id = int(parts[0])
-        name = parts[1]
-
-        dims = int(parts[4])
-
-        # qstep is last field
-        if quantized:  # Load as an int when is quantized
-            qstep = int(parts[5 + dims])
-        else:
-            qstep = float(parts[5 + dims])
-
-        qsteps[tensor_id] = qstep
-        id_to_name[tensor_id] = name
-        name_to_id[name] = tensor_id
-
-    return qsteps, id_to_name, name_to_id
-
-
 def read_decoded_meta(path):
     tensors = []
 
@@ -271,7 +238,7 @@ def build_npz(progress,
 def reconstruct(ctx: app.Context) -> tuple[_ScalarT, floating[Any]] | None:
     model = utils.load_model(
         ctx.model.name,
-        source=ctx.model.type,
+        source=sources.info[ctx.model.source].id,
         weights=ctx.model.weights,
         quantized=ctx.model.quantized
     )
@@ -292,7 +259,7 @@ def reconstruct(ctx: app.Context) -> tuple[_ScalarT, floating[Any]] | None:
             f"[bold white on yellow] RECONSTRUCTION [/bold white on yellow] [bold white on red] Error [/bold white on red] Decoded meta file not found at [dim white]{decoded_meta_path}[/dim white]")
         return None
 
-    qstep_param, id_to_name, _ = read_encoder_meta(model_meta_path, ctx.model.quantized)
+    qstep_param, id_to_name, _ = meta.read_encoder_meta(model_meta_path, ctx.model.quantized)
     decoded_meta = read_decoded_meta(decoded_meta_path)
 
     utils.console.print(
