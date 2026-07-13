@@ -22,7 +22,12 @@ class Context:
     resultsDir: Path
     decodedDir: Path
 
-
+import sbac
+import utils
+from meta import create_meta
+from model import select_model
+from reconstruction import reconstruct
+from results import save_result, avg_sbac_results
 from sbac import StaticBacExecResult
 
 @dataclass
@@ -33,14 +38,9 @@ class IterationResult:
     accuracy_metric: str
     accuracy_result: dict[str, float]
 
-import sbac
-import utils
-from meta import create_meta
-from model import select_model
-from reconstruction import reconstruct
-from results import save_result, avg_sbac_results
 
-import inference
+
+
 
 def run():
     # Args
@@ -80,6 +80,7 @@ def run():
         return
     model_name, model = res
 
+    import inference
     if not model.source in inference.info[model.inference].supported_sources:
         utils.console.print(
             f"[bold black on white] MODEL [/bold black on white] [bold white on red] ERROR [/bold white on red] Inference type {model.inference} not supported to source {model.source}.")
