@@ -15,14 +15,6 @@ import utils
 
 
 @dataclass
-class StaticBacExecResult:
-    tensors: int
-    encode: StaticBacEncodeResult
-    decode: StaticBacDecodeResult
-    result: CompletedProcess[str]
-
-
-@dataclass
 class StaticBacMemResult:
     baseline: float
     peak: float
@@ -45,6 +37,13 @@ class StaticBacDecodeResult:
     time: float
     speed: float
     mem: StaticBacMemResult
+
+@dataclass
+class StaticBacExecResult:
+    tensors: int
+    encode: StaticBacEncodeResult
+    decode: StaticBacDecodeResult
+    result: CompletedProcess[str]
 
 
 @dataclass
