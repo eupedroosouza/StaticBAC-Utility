@@ -1,6 +1,5 @@
 import os
 from dataclasses import dataclass
-from enum import Enum
 from typing import Callable
 
 import numpy as np
@@ -8,19 +7,13 @@ import torch
 from rich.progress import track
 
 import app
+import enums
 import inference.imagenet
 import meta
 import reconstruction
 import sources
 import utils
 from inference import mediawiki, sts2, sts2seq2seq
-
-
-class InferenceType(Enum):
-    IMAGENET = 1
-    MEDIAWIKI = 2
-    STS2 = 3
-    STS2_SEQ2SEQ = 4
 
 
 @dataclass
@@ -36,14 +29,14 @@ class InferenceTypeInfo:
     run_inference: Callable[[app.Context], InferenceResult | None]
 
 
-info: dict[InferenceType, InferenceTypeInfo] = {
-    InferenceType.IMAGENET: InferenceTypeInfo("ImageNet", [sources.Source.TORCHVISION],
+info: dict[enums.InferenceType, InferenceTypeInfo] = {
+    enums.InferenceType.IMAGENET: InferenceTypeInfo("ImageNet", [sources.Source.TORCHVISION],
                                               run_inference=imagenet.inference_with_imagenet),
-    InferenceType.MEDIAWIKI: InferenceTypeInfo("MediaWiki", [sources.Source.HUGGING_FACE],
+    enums.InferenceType.MEDIAWIKI: InferenceTypeInfo("MediaWiki", [sources.Source.HUGGING_FACE],
                                                run_inference=mediawiki.inference_with_mediawiki),
-    InferenceType.STS2: InferenceTypeInfo("STS-2", [sources.Source.HUGGING_FACE],
+    enums.InferenceType.STS2: InferenceTypeInfo("STS-2", [sources.Source.HUGGING_FACE],
                                           run_inference=sts2.inference_with_sts2),
-    InferenceType.STS2_SEQ2SEQ: InferenceTypeInfo("STS-2 to Seq2Seq", [sources.Source.HUGGING_FACE],
+    enums.InferenceType.STS2_SEQ2SEQ: InferenceTypeInfo("STS-2 to Seq2Seq", [sources.Source.HUGGING_FACE],
                                                   run_inference=sts2seq2seq.inference_with_sts2)
 }
 

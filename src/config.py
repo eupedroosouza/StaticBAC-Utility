@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 import yaml
 
-import inference
+import enums
 import sources
 import utils
 
@@ -15,14 +15,14 @@ class ModelConfig:
     name: str
     source: sources.Source
     quantized: bool
-    inference: inference.InferenceType
+    inference: enums.InferenceType
     weights: Optional[str] = None
 
     def __post_init__(self):
         if isinstance(self.source, str):
             self.source = sources.Source[self.source]
         if isinstance(self.inference, str):
-            self.inference = inference.InferenceType[self.inference]
+            self.inference = enums.InferenceType[self.inference]
 
 
 @dataclass

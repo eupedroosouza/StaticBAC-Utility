@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 
 import torch
 from datasets import load_dataset
@@ -8,13 +8,12 @@ from rich.progress import track
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-if TYPE_CHECKING:
-    import app
+import app
 import inference
 import utils
 
 
-def inference_with_sts2(ctx: "app.Context") -> Optional[inference.InferenceResult]:
+def inference_with_sts2(ctx: app.Context) -> Optional[inference.InferenceResult]:
     """
     Evaluates a Seq2Seq model (like T5) on the SST-2 validation dataset.
     """
