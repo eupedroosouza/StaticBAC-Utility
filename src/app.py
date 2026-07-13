@@ -11,15 +11,10 @@ from rich.box import DOUBLE_EDGE
 from rich.console import Group
 from rich.panel import Panel
 from rich.text import Text
-from setuptools.command.alias import alias
 
 import config
-import inference
 import sbac
 import utils
-from inference.imagenet import inference_with_imagenet
-from inference.mediawiki import inference_with_mediawiki
-from inference.sts2 import inference_with_sts2
 from meta import create_meta
 from model import select_model
 from reconstruction import reconstruct
@@ -44,6 +39,7 @@ class IterationResult:
     accuracy_metric: str
     accuracy_result: dict[str, float]
 
+import inference
 
 def run():
     # Args
