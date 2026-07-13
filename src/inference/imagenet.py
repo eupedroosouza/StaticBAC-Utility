@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import torch
 from rich.box import DOUBLE_EDGE
@@ -8,14 +8,15 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.models import Weights
 
-import app
+if TYPE_CHECKING:
+    import app
 import config
 import inference
 import utils
 from utils import load_torchvision_model
 
 
-def inference_with_imagenet(ctx: app.Context) -> Optional[inference.InferenceResult]:
+def inference_with_imagenet(ctx: "app.Context") -> Optional[inference.InferenceResult]:
     import torchvision.models as models # dont remove
     torch.set_num_threads(8)
 

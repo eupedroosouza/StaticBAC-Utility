@@ -1,5 +1,5 @@
 import math
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import torch
 import transformers
@@ -15,7 +15,8 @@ from rich.progress import track
 from rich.box import DOUBLE_EDGE
 from rich.panel import Panel
 
-import app
+if TYPE_CHECKING:
+    import app
 import utils
 
 
@@ -62,7 +63,7 @@ def perplexity_sliding_window(model_name, model, tokenizer, text, max_length=512
     return ppl, avg_nll, total_count
 
 
-def inference_with_mediawiki(ctx: app.Context) -> Optional[inference.InferenceResult]:
+def inference_with_mediawiki(ctx: "app.Context") -> Optional[inference.InferenceResult]:
     torch.set_num_threads(8)
 
     model_name = ctx.model.name

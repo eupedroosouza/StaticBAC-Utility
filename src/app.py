@@ -1,3 +1,4 @@
+import argparse
 import os.path
 import shutil
 import subprocess
@@ -10,6 +11,7 @@ from rich.box import DOUBLE_EDGE
 from rich.console import Group
 from rich.panel import Panel
 from rich.text import Text
+from setuptools.command.alias import alias
 
 import config
 import inference
@@ -44,6 +46,12 @@ class IterationResult:
 
 
 def run():
+    # Args
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--skip-inference", required=False, default=False, help="Skip inference")
+
+    args = parser.parse_args()
+
     # Header
     header = Panel(
         Group(
@@ -164,11 +172,15 @@ def run():
     overall_max_error, overall_mean_error = rec_res
 
     # 3. Run inference
-    res = inference.info[model.inference].run_inference(ctx)
-    if res is None:
-        return
-    accuracy_metric = res.metric
-    accuracy_result = res.result
+    if not args.skip_inference:
+        res = inference.info[model.inference].run_inference(ctx)
+        if res is None:
+            return
+        accuracy_metric = res.metric
+        accuracy_result = res.result
+    else:
+        accuracy_metric = "skipped"
+        accuracy_result = {"no_metric": 0.0}
 
     # 4. Results
     results_file = ctx.resultsDir / "results.csv"
