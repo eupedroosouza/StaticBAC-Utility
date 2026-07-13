@@ -11,7 +11,6 @@ from typing import Optional
 
 import app
 import config
-import results
 import utils
 
 
@@ -114,8 +113,8 @@ def setup_environment():
 
     return 1
 
-
 def run(ctx: app.Context, save_dir: Path) -> StaticBacExecResult:
+    import results
     model_binaries_dir = ctx.modelDir / "binaries"
     model_tensors_meta_path = ctx.modelDir / "tensor.meta"
 

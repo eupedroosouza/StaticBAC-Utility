@@ -13,14 +13,6 @@ from rich.panel import Panel
 from rich.text import Text
 
 import config
-import sbac
-import utils
-from meta import create_meta
-from model import select_model
-from reconstruction import reconstruct
-from results import save_result, avg_sbac_results
-from sbac import StaticBacExecResult
-
 
 @dataclass
 class Context:
@@ -31,6 +23,8 @@ class Context:
     decodedDir: Path
 
 
+from sbac import StaticBacExecResult
+
 @dataclass
 class IterationResult:
     staticbac: StaticBacExecResult
@@ -38,6 +32,13 @@ class IterationResult:
     overall_mean_error: float
     accuracy_metric: str
     accuracy_result: dict[str, float]
+
+import sbac
+import utils
+from meta import create_meta
+from model import select_model
+from reconstruction import reconstruct
+from results import save_result, avg_sbac_results
 
 import inference
 
