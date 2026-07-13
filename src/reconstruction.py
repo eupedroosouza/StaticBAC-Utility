@@ -235,7 +235,7 @@ def build_npz(progress,
     return data
 
 
-def reconstruct(ctx: app.Context) -> tuple[np._ScalarT, floating[Any]] | None:
+def reconstruct(ctx: app.Context):
     model = utils.load_model(
         ctx.model.name,
         source=sources.info[ctx.model.source].id,
