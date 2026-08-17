@@ -163,7 +163,7 @@ cython_debug/
 .idea/
 
 # Project
-Output/
+Output_/
 ctx_logs/
 .bin
 .npz

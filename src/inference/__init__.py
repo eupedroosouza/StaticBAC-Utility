@@ -8,13 +8,10 @@ from rich.progress import track
 
 import app
 import enums
-import inference.imagenet
 import meta
 import reconstruction
 import sources
 import utils
-from inference import mediawiki, sts2, sts2seq2seq
-
 
 @dataclass
 class InferenceResult:
@@ -28,6 +25,7 @@ class InferenceTypeInfo:
     supported_sources: list[sources.Source]
     run_inference: Callable[[app.Context], InferenceResult | None]
 
+from inference import mediawiki, sts2, sts2seq2seq, imagenet
 
 info: dict[enums.InferenceType, InferenceTypeInfo] = {
     enums.InferenceType.IMAGENET: InferenceTypeInfo("ImageNet", [sources.Source.TORCHVISION],

@@ -66,104 +66,54 @@ def load_model(name, source="hf", weights=None, quantized=False):
     return load_hf_model(name)
 
 
-from utils import console  # assumindo que seu console vem daqui
+from utils import console
 
 from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForSequenceClassification, AutoModel, \
     AutoModelForSeq2SeqLM
 
 
-# (Assumindo que você tem o utils importado)
 
 def load_hf_model(name: str):
     try:
-        config = AutoConfig.from_pretrained(name)
+        return AutoModelForCausalLM.from_pretrained(name)
+    except:
+        pass
 
-        if hasattr(config, "architectures") and config.architectures:
-            arch = config.architectures[0].lower()
+    try:
+        return AutoModelForSequenceClassification.from_pretrained(name)
+    except:
+        pass
 
-            # Classification models (BERT, RoBERTa no SST-2)
-            if "sequenceclassification" in arch:
-                console.print(
-                    f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Sequence Classification[/white]")
-                return AutoModelForSequenceClassification.from_pretrained(name)
-
-            # Text generations models (GPT-2, LLaMA, OPT, Bloom)
-            elif "causallm" in arch or "lmhead" in arch:
-                console.print(
-                    f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Causal LM[/white]")
-                return AutoModelForCausalLM.from_pretrained(name)
-
-            # Sequence-to-Sequence / Encoder-Decoder (T5, BART)
-            elif "conditionalgeneration" in arch or "seq2seqlm" in arch:
-                console.print(
-                    f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Seq2Seq LM[/white]")
-                return AutoModelForSeq2SeqLM.from_pretrained(name)
-
-            # Mask models (bert-base)
-            elif "maskedlm" in arch:
-                from transformers import AutoModelForMaskedLM
-                console.print(
-                    f"[bold black on white] MODEL [/bold black on white] [white]Loading {name} as Masked LM[/white]")
-                return AutoModelForMaskedLM.from_pretrained(name)
-
-        # Fallback to Auto Model
-        console.print(
-            f"[bold black on white] MODEL [/bold black on white] [white on yellow] WARNING [/white on yellow] Architecture unclear. Loading raw AutoModel.")
+    try:
         return AutoModel.from_pretrained(name)
+    except:
+        pass
 
-    except Exception as e:
-        console.print(
-            f"[bold black on white] MODEL [/bold black on white] [bold white on red] ERROR [/bold white on red] {e}"
-        )
-        raise RuntimeError(f"Could not load model: {name}.")
+    raise RuntimeError(f"Could not load model: {name}")
+
 
 
 def load_torchvision_model(model_name, weights_name=None, quantized=False):
-    import torch
-
-    # Check and define engine for quantized models
-    if quantized:
-        console.print(
-            f"[bold black on white] MODEL [/bold black on white] You trying load a quantized torchvision model: {model_name} ({weights_name}).")
-        engines = torch.backends.quantized.supported_engines
-        engines_str = ", ".join(engines)
-        console.print(
-            f"[bold black on white] MODEL [/bold black on white] Supported quantization engines: [magenta]{engines_str}[/magenta].")
-        required_engine = None
-        if weights_name:
-            if "QNNPACK" in weights_name.upper():
-                required_engine = "qnnpack"
-            elif "FBGEMM" in weights_name.upper():
-                required_engine = "fbgemm"
-        console.print(
-            f"[bold black on white] MODEL [/bold black on white] Model required engine: [green]{required_engine}[/green].")
-
-        if required_engine not in engines:
-            raise RuntimeError(f"Model needs engine: {required_engine}, but your CPU supports only: {engines_str}.")
-
-        torch.backends.quantized.engine = required_engine
-
     import torchvision.models as models
-    import torchvision.models.quantization as q_models
 
-    target_module = q_models if quantized else models
+    print(f"Loading torchvision model: {model_name}")
 
-    if not hasattr(target_module, model_name):
-        raise ValueError(f"Unknown torchvision model: {model_name} (quantized={quantized})")
+    # Dynamically get constructor
+    if not hasattr(models, model_name):
+        raise ValueError(f"Unknown torchvision model: {model_name}")
 
-    model_fn = getattr(target_module, model_name)
+    model_fn = getattr(models, model_name)
+
     weights = None
 
     if weights_name is not None:
-        try:
-            weights = eval(f"target_module.{weights_name}")
-        except AttributeError:
-            raise ValueError(f"Weights {weights_name} not found in target module.")
+        # Example: ResNet50_Weights.DEFAULT
+        weights = eval(f"models.{weights_name}")
 
     if quantized:
-        model = model_fn(weights=weights, quantize=True, progress=False)
+        model = model_fn(weights=weights, quantize=True)
     else:
-        model = model_fn(weights=weights, progress=False)
+        model = model_fn(weights=weights)
 
     return model
 

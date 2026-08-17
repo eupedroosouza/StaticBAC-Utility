@@ -22,12 +22,6 @@ class Context:
     resultsDir: Path
     decodedDir: Path
 
-import sbac
-import utils
-from meta import create_meta
-from model import select_model
-from reconstruction import reconstruct
-from results import save_result, avg_sbac_results
 from sbac import StaticBacExecResult
 
 @dataclass
@@ -39,8 +33,12 @@ class IterationResult:
     accuracy_result: dict[str, float]
 
 
-
-
+import sbac
+import utils
+from meta import create_meta
+from model import select_model
+from reconstruction import reconstruct
+from results import save_result, avg_sbac_results
 
 def run():
     # Args
@@ -145,7 +143,7 @@ def run():
             except subprocess.CalledProcessError as e:
                 error_text = Text()
                 error_text.append(f"Exit Code: {e.returncode}\n\n", style="bold red")
-                error_text.append("Standard Output (stdout):\n", style="bold red")
+                error_text.append("Standard Output_ (stdout):\n", style="bold red")
                 error_text.append(f"{e.stdout.strip() if e.stdout else 'None'}\n\n")
                 error_text.append("Standard Error (stderr):\n", style="bold red")
                 error_text.append(f"{e.stderr.strip() if e.stderr else 'None'}")
