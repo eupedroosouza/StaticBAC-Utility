@@ -89,7 +89,7 @@ def inference_with_mediawiki(ctx: "app.Context") -> Optional[inference.Inference
     with utils.console.status(
             "[bold black on magenta] INFERENCE [/bold black on magenta] [white]Loading dataset (wikitext-2-raw-v1)...[/white]"):
         try:
-            dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="validation")
+            dataset = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", split="validation")
             text = "\n".join([t for t in dataset["text"] if t.strip()])
         except Exception as e:
             utils.console.print(
