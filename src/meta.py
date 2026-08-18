@@ -39,10 +39,7 @@ def read_encoder_meta(path, quantized):
         dims = int(parts[4])
 
         # qstep is last field
-        if quantized:  # Load as an int when is quantized
-            qstep = int(parts[5 + dims])
-        else:
-            qstep = float(parts[5 + dims])
+        qstep = float(parts[5 + dims])
 
         qsteps[tensor_id] = qstep
         id_to_name[tensor_id] = name
