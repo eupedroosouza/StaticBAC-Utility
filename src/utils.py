@@ -66,7 +66,7 @@ def load_model(name, source="hf", weights=None, quantized=False):
     return load_hf_model(name)
 
 
-from utils import console  # assumindo que seu console vem daqui
+from utils import console
 
 from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForSequenceClassification, AutoModel, \
     AutoModelForSeq2SeqLM
@@ -143,29 +143,42 @@ def load_torchvision_model(model_name, weights_name=None, quantized=False):
 
         torch.backends.quantized.engine = required_engine
 
-    import torchvision.models as models
-    import torchvision.models.quantization as q_models
+    import importlib
+    if quantized:
+        models = importlib.import_module("torchvision.models.quantization")
+    else:
+        models = importlib.import_module("torchvision.models")
 
-    target_module = q_models if quantized else models
 
-    if not hasattr(target_module, model_name):
-        raise ValueError(f"Unknown torchvision model: {model_name} (quantized={quantized})")
+    if not hasattr(models, model_name):
+        raise ValueError(f"Unknown torchvision model: {model_name} (quantized={quantized}) in module {models.__name__}")
 
-    model_fn = getattr(target_module, model_name)
+    model_fn = getattr(models, model_name)
+
     weights = None
-
     if weights_name is not None:
+        obj = models
         try:
-            weights = eval(f"target_module.{weights_name}")
+            for part in weights_name.split("."):
+                obj = getattr(obj, part)
+            weights = obj
         except AttributeError:
-            raise ValueError(f"Weights {weights_name} not found in target module.")
+            raise ValueError(
+                f"Weight enum '{weights_name}' not found in "
+                f"{models.__name__}"
+            )
+
+    kwargs = {}
+
+    if weights is not None:
+        kwargs["weights"] = weights
 
     if quantized:
-        model = model_fn(weights=weights, quantize=True, progress=False)
-    else:
-        model = model_fn(weights=weights, progress=False)
+        kwargs["quantize"] = True
 
-    return model
+    kwargs["progress"] = False
+
+    return model_fn(**kwargs)
 
 
 def get_np_type(bitwidth: int):

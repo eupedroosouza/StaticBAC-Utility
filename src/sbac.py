@@ -11,16 +11,7 @@ from typing import Optional
 
 import app
 import config
-import results
 import utils
-
-
-@dataclass
-class StaticBacExecResult:
-    tensors: int
-    encode: StaticBacEncodeResult
-    decode: StaticBacDecodeResult
-    result: CompletedProcess[str]
 
 
 @dataclass
@@ -46,6 +37,14 @@ class StaticBacDecodeResult:
     time: float
     speed: float
     mem: StaticBacMemResult
+
+@dataclass
+class StaticBacExecResult:
+    tensors: int
+    encode: StaticBacEncodeResult
+    decode: StaticBacDecodeResult
+    result: CompletedProcess[str]
+
 
 
 @dataclass
@@ -116,6 +115,8 @@ def setup_environment():
 
 
 def run(ctx: app.Context, save_dir: Path) -> StaticBacExecResult:
+    import results
+
     model_binaries_dir = ctx.modelDir / "binaries"
     model_tensors_meta_path = ctx.modelDir / "tensor.meta"
 

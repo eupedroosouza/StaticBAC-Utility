@@ -1,6 +1,5 @@
 import os
 from dataclasses import dataclass
-from enum import Enum
 from typing import Callable
 
 import numpy as np
@@ -8,19 +7,10 @@ import torch
 from rich.progress import track
 
 import app
-import inference.imagenet
-import meta
 import reconstruction
 import sources
 import utils
-from inference import mediawiki, sts2, sts2seq2seq
-
-
-class InferenceType(Enum):
-    IMAGENET = 1
-    MEDIAWIKI = 2
-    STS2 = 3
-    STS2_SEQ2SEQ = 4
+import values
 
 
 @dataclass
@@ -35,20 +25,22 @@ class InferenceTypeInfo:
     supported_sources: list[sources.Source]
     run_inference: Callable[[app.Context], InferenceResult | None]
 
+from inference import mediawiki, sts2, sts2seq2seq, imagenet
 
-info: dict[InferenceType, InferenceTypeInfo] = {
-    InferenceType.IMAGENET: InferenceTypeInfo("ImageNet", [sources.Source.TORCHVISION],
+info: dict[values.InferenceType, InferenceTypeInfo] = {
+    values.InferenceType.IMAGENET: InferenceTypeInfo("ImageNet", [sources.Source.TORCHVISION],
                                               run_inference=imagenet.inference_with_imagenet),
-    InferenceType.MEDIAWIKI: InferenceTypeInfo("MediaWiki", [sources.Source.HUGGING_FACE],
+    values.InferenceType.MEDIAWIKI: InferenceTypeInfo("MediaWiki", [sources.Source.HUGGING_FACE],
                                                run_inference=mediawiki.inference_with_mediawiki),
-    InferenceType.STS2: InferenceTypeInfo("STS-2", [sources.Source.HUGGING_FACE],
+    values.InferenceType.STS2: InferenceTypeInfo("STS-2", [sources.Source.HUGGING_FACE],
                                           run_inference=sts2.inference_with_sts2),
-    InferenceType.STS2_SEQ2SEQ: InferenceTypeInfo("STS-2 to Seq2Seq", [sources.Source.HUGGING_FACE],
+    values.InferenceType.STS2_SEQ2SEQ: InferenceTypeInfo("STS-2 to Seq2Seq", [sources.Source.HUGGING_FACE],
                                                   run_inference=sts2seq2seq.inference_with_sts2)
 }
 
 
 def load_model_from_npz(ctx: app.Context, model):
+    import meta
     npz_path = os.path.join(ctx.resultsDir, f"{ctx.modelName}_reconstructed.npz")
     if not os.path.exists(npz_path):
         utils.console.print(
