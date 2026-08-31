@@ -45,7 +45,6 @@ import inference
 def run():
     # Args
     parser = argparse.ArgumentParser()
-    parser.add_argument("--skip-inference", required=False, default=False, help="Skip inference")
 
     args = parser.parse_args()
 
@@ -84,6 +83,8 @@ def run():
         utils.console.print(
             f"[bold black on white] MODEL [/bold black on white] [bold white on red] ERROR [/bold white on red] Inference type {model.inference} not supported to source {model.source}.")
         return
+
+    run_inf = questionary.confirm("Run inference? (default: Yes)", default=True, auto_enter=False).ask()
 
     # Context
     output_dir = Path(config.get_config().utility.output_dir)
@@ -163,13 +164,22 @@ def run():
         return
 
     # 2. Run reconstruction model
-    rec_res = reconstruct(ctx)
-    if rec_res is None:
-        return
-    overall_max_error, overall_mean_error = rec_res
+    if model.quantized:
+        overall_max_error = 0
+        overall_mean_error = 0
+        utils.console.print(
+            f"[bold black on white] MODEL [/bold black on white] [bold white on red] ERROR [/bold white on red] Inference on quantized models is unsupported actually (skipped reconstruction and inference).")
+    else:
+        rec_res = reconstruct(ctx)
+        if rec_res is None:
+            return
+        overall_max_error, overall_mean_error = rec_res
 
     # 3. Run inference
-    if not args.skip_inference:
+    if model.quantized:
+        accuracy_metric = "no_supported"
+        accuracy_result = {"no_supported": 0.0}
+    elif run_inf:
         res = inference.info[model.inference].run_inference(ctx)
         if res is None:
             return
