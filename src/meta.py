@@ -110,6 +110,10 @@ def create_meta(ctx: app.Context):
         export_tensors = {}
 
         for name, tensor in state_dict.items():
+            # Dtype is only metadata from a Torch quantized tensor, skip
+            if ".dtype" in name:
+                continue
+
             # Separate Weights/Bias when model is quantized by Torch
             # Torch saves weights in a int8 structure but bias in a float32; therefore, they need to be separated
             # The biases will undergo to quantization normally
@@ -134,9 +138,6 @@ def create_meta(ctx: app.Context):
             task = progress.add_task("[bold white]Extracting model...", total=len(export_tensors))
 
             for name, param in export_tensors.items():
-                # Dtype is only metadata from a Torch quantized tensor, skip
-                if ".dtype" in name:
-                    continue
 
                 tensor_kind = "weight" if "weight" in name.lower() else "bias" if "bias" in name.lower() else "buffer"
 
