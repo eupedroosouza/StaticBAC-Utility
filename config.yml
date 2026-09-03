@@ -28,14 +28,14 @@ models:
   inception-v3:
     name: inception_v3
     source: TORCHVISION
-    quantized: true
-    weights: Inception_V3_QuantizedWeights.IMAGENET1K_FBGEMM_V1
+    quantized: false
+    weights: MobileNet_V3_Large_Weights.IMAGENET1K_V1
     inference: IMAGENET
   mobilenet-v3:
     name: mobilenet_v3_large
     source: TORCHVISION
-    quantized: true
-    weights: MobileNet_V3_Large_QuantizedWeights.IMAGENET1K_QNNPACK_V1
+    quantized: false
+    weights: Inception_V3_Weights.IMAGENET1K_V1
     inference: IMAGENET
   vgg-19:
     name: vgg19
@@ -48,6 +48,12 @@ models:
     source: TORCHVISION
     quantized: false
     weights: Swin_V2_B_Weights.IMAGENET1K_V1
+    inference: IMAGENET
+  efficientnet-b7:
+    name: efficientnet_b7
+    source: TORCHVISION
+    quantized: false
+    weights: EfficientNet_B7_Weights.IMAGENET1K_V1
     inference: IMAGENET
   # Already tested
   bert:
