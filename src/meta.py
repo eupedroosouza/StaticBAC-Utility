@@ -106,26 +106,8 @@ def create_meta(ctx: app.Context):
         tensor_meta_list = []
         tensor_id = 0
 
-        state_dict = model.state_dict()
-        export_tensors = {}
-
-        for name, tensor in state_dict.items():
-            # Dtype is only metadata from a Torch quantized tensor, skip
-            if ".dtype" in name:
-                continue
-
-            # Separate Weights/Bias when model is quantized by Torch
-            # Torch saves weights in a int8 structure but bias in a float32; therefore, they need to be separated
-            # The biases will undergo to quantization normally
-            # The weights will be save as int8 normally, as expected
-            if name.endswith("._packed_params._packed_params"):
-                prefix = name.replace("._packed_params._packed_params", "")
-                mod = get_submodule_safe(model, prefix)
-                export_tensors[f"{name}_weight"] = mod.weight()
-                if hasattr(mod, "bias") and mod.bias() is not None:
-                    export_tensors[f"{name}_bias"] = mod.bias()
-            else:
-                export_tensors[name] = tensor
+        parameters = list(model.named_parameters())
+        buffers = list(model.named_buffers())
 
         with Progress(
                 SpinnerColumn(spinner_name="dots", style="white"),
@@ -135,14 +117,15 @@ def create_meta(ctx: app.Context):
                 TimeElapsedColumn(),
                 console=utils.console
         ) as progress:
-            task = progress.add_task("[bold white]Extracting model...", total=len(export_tensors))
+            param_task = progress.add_task("[bold white]Extracting parameters...", total=len(parameters))
 
-            for name, param in export_tensors.items():
+            # --- PARAMETERS ---
+            for name, param in parameters:
+                tensor_kind = "weight" if "weight" in name.lower() else "bias" if "bias" in name.lower() else "other"
 
-                tensor_kind = "weight" if "weight" in name.lower() else "bias" if "bias" in name.lower() else "buffer"
-
-                # If is already quantized
-                if quantized and getattr(param, "is_quantized", False):
+                # If model is already quantized (e.g., torchvision quantized models),
+                # use int_repr() to extract integer values directly
+                if quantized and hasattr(param, "int_repr"):
                     arr = param.int_repr().cpu().numpy().astype(np.int32)
                     q, qstep, bitwidth = quantization.quantize_tensor(
                         arr,
@@ -151,13 +134,9 @@ def create_meta(ctx: app.Context):
                     )
                 else:
                     arr = param.detach().cpu().numpy().astype(np.float32)
-
-                    # Skip if is buffer (buffer not should quantize)
-                    use_quant = (tensor_kind != "buffer") and not quantized
-
                     q, qstep, bitwidth = quantization.quantize_tensor(
                         arr,
-                        use_quant=use_quant,
+                        use_quant=True,
                         tensor_kind=tensor_kind
                     )
 
@@ -170,12 +149,47 @@ def create_meta(ctx: app.Context):
                     "qstep": qstep
                 })
 
+                # Save binary
                 tensor_file = f"{name}.bin"
                 filepath = os.path.join(bin_dir, tensor_file)
                 np.ascontiguousarray(q.astype(np.int32)).tofile(filepath)
 
                 tensor_id += 1
-                progress.update(task, advance=1)
+                progress.update(param_task, advance=1)
+
+            buf_task = progress.add_task("[bold white]Extracting buffers...", total=len(buffers))
+
+            # --- BUFFERS ---
+            # Buffers are NOT part of named_parameters (e.g., BatchNorm stats)
+            # They must NOT be quantized to preserve correctness
+            # We store them as raw int32 with bitwidth=32
+            for name, buf in buffers:
+                arr = buf.detach().cpu().numpy().astype(np.float32)
+                tensor_kind = "buffer"
+
+                # Always cast to int32, never quantize
+                q, qstep, bitwidth = quantization.quantize_tensor(
+                    arr,
+                    use_quant=False,
+                    tensor_kind=tensor_kind
+                )
+
+                tensor_meta_list.append({
+                    "id": tensor_id,
+                    "name": name,
+                    "type": tensor_kind,
+                    "bitwidth": bitwidth,
+                    "shape": list(q.shape),
+                    "qstep": qstep
+                })
+
+                # Save binary
+                tensor_file = f"{name}.bin"
+                filepath = os.path.join(bin_dir, tensor_file)
+                np.ascontiguousarray(q.astype(np.int32)).tofile(filepath)
+
+                tensor_id += 1
+                progress.update(buf_task, advance=1)
 
         write_metadata(meta_file, tensor_meta_list)
 
