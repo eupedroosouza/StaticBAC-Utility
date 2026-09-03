@@ -29,13 +29,13 @@ models:
     name: inception_v3
     source: TORCHVISION
     quantized: false
-    weights: MobileNet_V3_Large_Weights.IMAGENET1K_V1
+    weights: Inception_V3_Weights.IMAGENET1K_V1
     inference: IMAGENET
   mobilenet-v3:
     name: mobilenet_v3_large
     source: TORCHVISION
     quantized: false
-    weights: Inception_V3_Weights.IMAGENET1K_V1
+    weights: MobileNet_V3_Large_Weights.IMAGENET1K_V1
     inference: IMAGENET
   vgg-19:
     name: vgg19
