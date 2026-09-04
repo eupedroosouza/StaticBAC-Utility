@@ -1,5 +1,5 @@
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -17,6 +17,7 @@ class ModelConfig:
     quantized: bool
     inference: values.InferenceType
     weights: Optional[str] = None
+    options: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         if isinstance(self.source, str):

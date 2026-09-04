@@ -4,6 +4,7 @@ import torch
 from rich.box import DOUBLE_EDGE
 from rich.panel import Panel
 from rich.progress import track
+from torch.distributed.autograd import context
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.models import Weights
@@ -14,7 +15,6 @@ import config
 import inference
 import utils
 from utils import load_torchvision_model
-
 
 def inference_with_imagenet(ctx: "app.Context") -> Optional[inference.InferenceResult]:
     import torchvision.models as models # dont remove
@@ -41,7 +41,6 @@ def inference_with_imagenet(ctx: "app.Context") -> Optional[inference.InferenceR
             root=config.get_config().dataset.image_net,
             transform=transform
         )
-        dataloader = DataLoader(dataset, batch_size=256, shuffle=False, num_workers=8)
 
     utils.console.print("[bold black on magenta] INFERENCE [/bold black on magenta] [white]Loaded dataset.[/white]")
 
@@ -52,6 +51,13 @@ def inference_with_imagenet(ctx: "app.Context") -> Optional[inference.InferenceR
     model.to(device)
     utils.console.print(
         f"[bold black on magenta] INFERENCE [/bold black on magenta] [white]Running on device:[/white] [magenta]{device}[/magenta]")
+
+    batch_size = int( ctx.model.options["batch_size"]) if "batch_size" in ctx.model.options  else 256
+
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=8)
+    utils.console.print(
+        f"[bold black on magenta] INFERENCE [/bold black on magenta] [white]Batch Size:[/white] [magenta]{batch_size}[/magenta]")
+
 
     top1_correct = 0
     top5_correct = 0

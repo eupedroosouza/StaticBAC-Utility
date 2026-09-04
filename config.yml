@@ -55,6 +55,8 @@ models:
     quantized: false
     weights: EfficientNet_B7_Weights.IMAGENET1K_V1
     inference: IMAGENET
+    options:
+      batch_size: "16" # A good value for the 3060 Ti; with graphics cards that have more VRAM, it is possible to increase to improve inference time.
   # Already tested
   bert:
     name: textattack/bert-base-uncased-SST-2
