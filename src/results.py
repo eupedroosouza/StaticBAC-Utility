@@ -25,29 +25,38 @@ def to_num(val):
 
 
 def save_result(path: Path, ctx: app.Context, result: app.IterationResult):
-    fields = ["model", "tensors", "original_size", "compressed_size", "compression_ratio", "encoding_time",
-              "encoding_speed", "encoding_mem_baseline", "encoding_mem_peak",
-              "encoding_mem_delta", "decoding_time", "decoding_speed", "decoding_mem_baseline", "decoding_mem_peak",
-              "decoding_mem_delta", "overall_max_error", "overall_mean_error", "dataset", "accuracy_metric"]
+    data: dict[str, str] = {}
 
-    row = [ctx.model.name, result.staticbac.tensors, f"{result.staticbac.encode.originalSize:.2f}",
-           f"{result.staticbac.encode.compressedSize:.2f}",
-           f"{result.staticbac.encode.compressionRatio:.4f}", f"{result.staticbac.encode.time:.4f}",
-           f"{result.staticbac.encode.speed:.4f}", f"{result.staticbac.encode.mem.baseline:.4f}",
-           f"{result.staticbac.encode.mem.peak:.4f}", f"{result.staticbac.encode.mem.delta:.4f}",
-           f"{result.staticbac.decode.time:.4f}", f"{result.staticbac.decode.speed:.4f}",
-           f"{result.staticbac.decode.mem.baseline:.4f}", f"{result.staticbac.decode.mem.peak:.4f}",
-           f"{result.staticbac.decode.mem.delta:.4f}", f"{result.overall_max_error:.20f}",
-           f"{result.overall_mean_error:.20f}", inference.info[ctx.model.inference].name, result.accuracy_metric]
+    data["model"] = ctx.model.name
+    data["tensors"] = f"{result.staticbac.tensors}"
+    data["original_size"] = f"{result.staticbac.encode.originalSize:.2f}"
+    data["compressed_size"] = f"{result.staticbac.encode.compressedSize:.2f}"
+    data["decoded_size"] = f"{result.staticbac.decode.decodedSize:.2f}"
+    data["compression_ratio"] = f"{result.staticbac.encode.compressionRatio:.4f}"
+    data["encode_time"] = f"{result.staticbac.encode.time:.4f}"
+    data["encode_speed"] = f"{result.staticbac.encode.speed:.4f}"
+    data["decode_time"] = f"{result.staticbac.decode.time:.4f}"
+    data["decode_speed"] = f"{result.staticbac.decode.speed:.4f}"
+    data["encode_mem_baseline"] = f"{result.staticbac.encode.mem.baseline:.4f}"
+    data["encode_mem_peak"] = f"{result.staticbac.encode.mem.peak:.4f}"
+    data["encode_mem_delta"] = f"{result.staticbac.encode.mem.delta:.4f}"
+    data["decode_mem_baseline"] = f"{result.staticbac.decode.mem.baseline:.4f}"
+    data["decode_mem_peak"] = f"{result.staticbac.decode.mem.peak:.4f}"
+    data["decode_mem_delta"] = f"{result.staticbac.decode.mem.delta:.4f}"
+    data["dataset"] = inference.info[ctx.model.inference].name
+    data["acuracy_metric"] = result.accuracy_metric
+
 
     for k, v in result.accuracy_result.items():
-        fields.append(f"accuracy_{k}")
-        row.append(f"{v:.4f}")
+        data[f"accuracy_{k}"] = f"{v:.4f}"
+
+    data["overall_max_error"] = f"{result.overall_max_error:.20f}"
+    data["overall_mean_error"] = f"{result.overall_mean_error:.20f}"
 
     with open(path, "w", encoding="utf-8", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(fields)
-        writer.writerow(row)
+        for name, value in data.items():
+            writer.writerow([name, value])
     pass
 
 
